@@ -10,20 +10,14 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author') || 'Unknown';
     const category = searchParams.get('category') || 'Inspiration';
 
-    // More aggressive text truncation - reduced from 120 to 100 characters
-    const truncatedText = text.length > 100 ? text.substring(0, 97) + '...' : text;
+    // Moderate text truncation - allowing more text to display
+    const truncatedText = text.length > 150 ? text.substring(0, 147) + '...' : text;
 
-    // More conservative font sizing to prevent overlap
+    // More generous font sizing for readability
     const getFontSize = (textLength: number) => {
-      if (textLength > 80) return '20px';       // Very long text - much smaller
-      if (textLength > 50) return '26px';       // Long text - smaller
-      return '32px';                            // Short to medium text
-    };
-
-    // Adjusted line height for better text spacing
-    const getLineHeight = (textLength: number) => {
-      if (textLength > 50) return '1.2';        // Tighter for longer text
-      return '1.3';                             // Normal for shorter text
+      if (textLength > 100) return 42;       // Long text - still readable
+      if (textLength > 60) return 48;        // Medium text - good size
+      return 54;                             // Short text - large and impactful
     };
 
     return new ImageResponse(
@@ -41,18 +35,18 @@ export async function GET(request: NextRequest) {
             padding: '40px',
           }}
         >
-          {/* Main Content Container */}
+          {/* Main Content Container with clear width boundaries */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '100%',
+              width: '90%',
               maxWidth: '1000px',
               height: '100%',
               textAlign: 'center',
-              padding: '60px 40px', // Increased horizontal padding from 20px to 40px
+              padding: '50px 80px',
             }}
           >
             {/* Category Badge */}
@@ -67,14 +61,14 @@ export async function GET(request: NextRequest) {
                 borderRadius: '25px',
                 fontSize: '18px',
                 fontWeight: '600',
-                marginBottom: '50px', // Increased from 40px to 50px
+                marginBottom: '50px',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
               }}
             >
               {category}
             </div>
 
-            {/* Quote Text with improved spacing and conservative sizing */}
+            {/* Quote Text with proper wrapping constraints */}
             <div
               style={{
                 display: 'flex',
@@ -83,13 +77,15 @@ export async function GET(request: NextRequest) {
                 fontSize: getFontSize(truncatedText.length),
                 fontWeight: '700',
                 color: 'white',
-                lineHeight: getLineHeight(truncatedText.length),
-                marginBottom: '50px', // Increased from 40px to 50px
+                lineHeight: '1.4',
+                marginBottom: '50px',
                 textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
                 textAlign: 'center',
                 width: '100%',
-                padding: '0 80px', // Increased padding from 60px to 80px
-                maxWidth: '900px',
+                maxWidth: '800px',
+                padding: '0 40px',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
               }}
             >
               "{truncatedText}"
@@ -105,14 +101,14 @@ export async function GET(request: NextRequest) {
                 fontWeight: '500',
                 color: 'rgba(255, 255, 255, 0.9)',
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-                marginTop: '30px', // Increased from 20px to 30px
+                marginTop: '30px',
               }}
             >
               — {author}
             </div>
           </div>
 
-          {/* Bottom Branding - keeping absolute positioning for corner placement */}
+          {/* Bottom Branding */}
           <div
             style={{
               position: 'absolute',
