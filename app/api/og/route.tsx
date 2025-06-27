@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || 'Inspiration';
 
     // Truncate text if too long for the image
-    const truncatedText = text.length > 200 ? text.substring(0, 197) + '...' : text;
+    const truncatedText = text.length > 180 ? text.substring(0, 177) + '...' : text;
 
     return new ImageResponse(
       (
@@ -48,11 +48,12 @@ export async function GET(request: NextRequest) {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '80px',
-              maxWidth: '900px',
+              padding: '60px',
+              maxWidth: '1000px',
               textAlign: 'center',
               position: 'relative',
               zIndex: 1,
+              height: '100%',
             }}
           >
             {/* Category Badge */}
@@ -61,11 +62,11 @@ export async function GET(request: NextRequest) {
                 display: 'flex',
                 background: 'rgba(255, 255, 255, 0.2)',
                 color: 'white',
-                padding: '12px 24px',
-                borderRadius: '25px',
-                fontSize: '18px',
+                padding: '8px 20px',
+                borderRadius: '20px',
+                fontSize: '16px',
                 fontWeight: '600',
-                marginBottom: '40px',
+                marginBottom: '30px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
               }}
@@ -77,13 +78,17 @@ export async function GET(request: NextRequest) {
             <div
               style={{
                 display: 'flex',
-                fontSize: '48px',
+                fontSize: truncatedText.length > 120 ? '36px' : truncatedText.length > 80 ? '42px' : '48px',
                 fontWeight: '700',
                 color: 'white',
-                lineHeight: '1.2',
-                marginBottom: '40px',
+                lineHeight: '1.3',
+                marginBottom: '30px',
                 textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
                 fontFamily: 'Georgia, serif',
+                textAlign: 'center',
+                maxWidth: '900px',
+                wordWrap: 'break-word',
+                hyphens: 'auto',
               }}
             >
               "{truncatedText}"
@@ -93,10 +98,11 @@ export async function GET(request: NextRequest) {
             <div
               style={{
                 display: 'flex',
-                fontSize: '28px',
+                fontSize: '24px',
                 fontWeight: '500',
                 color: 'rgba(255, 255, 255, 0.9)',
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                marginTop: '10px',
               }}
             >
               — {author}
@@ -107,12 +113,12 @@ export async function GET(request: NextRequest) {
           <div
             style={{
               position: 'absolute',
-              bottom: '30px',
-              right: '40px',
+              bottom: '25px',
+              right: '35px',
               display: 'flex',
               alignItems: 'center',
               color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '16px',
+              fontSize: '14px',
               fontWeight: '500',
             }}
           >
