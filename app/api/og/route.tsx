@@ -11,7 +11,14 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || 'Inspiration';
 
     // Truncate text if too long for the image
-    const truncatedText = text.length > 180 ? text.substring(0, 177) + '...' : text;
+    const truncatedText = text.length > 150 ? text.substring(0, 147) + '...' : text;
+
+    // Dynamic font size based on text length
+    const getFontSize = (textLength: number) => {
+      if (textLength > 100) return '32px';
+      if (textLength > 60) return '38px';
+      return '44px';
+    };
 
     return new ImageResponse(
       (
@@ -24,50 +31,37 @@ export async function GET(request: NextRequest) {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            position: 'relative',
+            fontFamily: 'sans-serif',
+            padding: '40px',
           }}
         >
-          {/* Background Pattern */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              background: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%)',
-            }}
-          />
-          
-          {/* Content Container */}
+          {/* Main Content Card */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '60px',
+              width: '100%',
               maxWidth: '1000px',
-              textAlign: 'center',
-              position: 'relative',
-              zIndex: 1,
               height: '100%',
+              textAlign: 'center',
+              padding: '60px 40px',
             }}
           >
             {/* Category Badge */}
             <div
               style={{
                 display: 'flex',
-                background: 'rgba(255, 255, 255, 0.2)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.25)',
                 color: 'white',
-                padding: '8px 20px',
-                borderRadius: '20px',
-                fontSize: '16px',
+                padding: '12px 24px',
+                borderRadius: '25px',
+                fontSize: '18px',
                 fontWeight: '600',
-                marginBottom: '30px',
-                backdropFilter: 'blur(10px)',
+                marginBottom: '40px',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
               }}
             >
@@ -78,17 +72,17 @@ export async function GET(request: NextRequest) {
             <div
               style={{
                 display: 'flex',
-                fontSize: truncatedText.length > 120 ? '36px' : truncatedText.length > 80 ? '42px' : '48px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: getFontSize(truncatedText.length),
                 fontWeight: '700',
                 color: 'white',
-                lineHeight: '1.3',
-                marginBottom: '30px',
+                lineHeight: '1.4',
+                marginBottom: '40px',
                 textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-                fontFamily: 'Georgia, serif',
                 textAlign: 'center',
-                maxWidth: '900px',
-                wordWrap: 'break-word',
-                hyphens: 'auto',
+                width: '100%',
+                padding: '0 20px',
               }}
             >
               "{truncatedText}"
@@ -98,27 +92,28 @@ export async function GET(request: NextRequest) {
             <div
               style={{
                 display: 'flex',
-                fontSize: '24px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '28px',
                 fontWeight: '500',
                 color: 'rgba(255, 255, 255, 0.9)',
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-                marginTop: '10px',
               }}
             >
               — {author}
             </div>
           </div>
 
-          {/* Bottom Branding */}
+          {/* Bottom Branding - Only element using absolute positioning */}
           <div
             style={{
               position: 'absolute',
-              bottom: '25px',
-              right: '35px',
+              bottom: '30px',
+              right: '40px',
               display: 'flex',
               alignItems: 'center',
               color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '14px',
+              fontSize: '16px',
               fontWeight: '500',
             }}
           >
