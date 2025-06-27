@@ -9,61 +9,61 @@ import { Textarea } from '@/components/ui/textarea';
 import { Share2, Heart, Sparkles, Check, Archive } from 'lucide-react';
 
 interface Quote {
-  id?: number;
-  text: string;
-  author: string;
-  category: string;
+  id?: number;
+  text: string;
+  author: string;
+  category: string;
 }
 
 export default function Home() {
-  const [currentQuote, setCurrentQuote] = useState<Quote | null>(null);
-  const [userInput, setUserInput] = useState('');
-  const [authorName, setAuthorName] = useState('');
-  const [generatedQuotes, setGeneratedQuotes] = useState<Quote[]>([]);
-  const [selectedQuoteIndex, setSelectedQuoteIndex] = useState<number | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAIGenerated, setIsAIGenerated] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState<Quote | null>(null);
+  const [userInput, setUserInput] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [generatedQuotes, setGeneratedQuotes] = useState<Quote[]>([]);
+  const [selectedQuoteIndex, setSelectedQuoteIndex] = useState<number | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
 
-  const generateAIQuote = async () => {
-    if (!userInput.trim() || !authorName.trim()) {
-      alert('Please fill out your name and thoughts!');
-      return;
-    }
-    setIsLoading(true);
+  const generateAIQuote = async () => {
+    if (!userInput.trim() || !authorName.trim()) {
+      alert('Please fill out your name and thoughts!');
+      return;
+    }
+    setIsLoading(true);
     setCurrentQuote(null);
     setGeneratedQuotes([]);
     setSelectedQuoteIndex(null);
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userInput, authorName: authorName.trim() }),
-      });
-      if (!response.ok) { throw new Error('Failed to generate quote'); }
-      const data = await response.json();
-      if (data.quotes && data.quotes.length > 0) {
-        setGeneratedQuotes(data.quotes);
-        setIsAIGenerated(true);
-        setIsLiked(false);
-      } else {
-        throw new Error('No quotes received');
-      }
-    } catch (error) {
-      console.error('Error generating quote:', error);
-      alert('Sorry, there was an error generating your personalized quote.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userInput, authorName: authorName.trim() }),
+      });
+      if (!response.ok) { throw new Error('Failed to generate quote'); }
+      const data = await response.json();
+      if (data.quotes && data.quotes.length > 0) {
+        setGeneratedQuotes(data.quotes);
+        setIsAIGenerated(true);
+        setIsLiked(false);
+      } else {
+        throw new Error('No quotes received');
+      }
+    } catch (error) {
+      console.error('Error generating quote:', error);
+      alert('Sorry, there was an error generating your personalized quote.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const selectQuote = (index: number) => {
-    setSelectedQuoteIndex(index);
-    setCurrentQuote(generatedQuotes[index]);
-    setIsLiked(false);
-  };
+  const selectQuote = (index: number) => {
+    setSelectedQuoteIndex(index);
+    setCurrentQuote(generatedQuotes[index]);
+    setIsLiked(false);
+  };
 
-  const saveQuoteToArchive = () => {
+  const saveQuoteToArchive = () => {
     if (!currentQuote) {
       alert('Please select a quote to save.');
       return;
@@ -84,23 +84,30 @@ export default function Home() {
     }
   };
 
-  const shareQuote = async () => {
+  const shareQuote = () => {
     if (!currentQuote) return;
-    const text = `"${currentQuote.text}" - ${currentQuote.author}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Quote of the Day', text: text, url: window.location.href });
-      } catch (err) { console.log('Error sharing:', err); }
-    } else {
-      navigator.clipboard.writeText(text);
-      alert('Quote copied to clipboard!');
-    }
-  };
 
-  const hasSelectedQuote = selectedQuoteIndex !== null;
-  const showGeneratedQuotes = generatedQuotes.length > 0;
+    // Construct the URL for our dynamic quote page
+    const baseUrl = window.location.origin;
+    const quoteUrl = new URL('/q', baseUrl);
+    quoteUrl.searchParams.set('text', currentQuote.text);
+    quoteUrl.searchParams.set('author', currentQuote.author);
+    quoteUrl.searchParams.set('category', currentQuote.category);
 
-  return (
+    // Construct Twitter Web Intent URL
+    const tweetText = 'I created a new quote from my daily thoughts! Check it out:';
+    const twitterUrl = new URL('https://twitter.com/intent/tweet');
+    twitterUrl.searchParams.set('text', tweetText);
+    twitterUrl.searchParams.set('url', quoteUrl.toString());
+
+    // Open Twitter intent in new tab
+    window.open(twitterUrl.toString(), '_blank');
+  };
+
+  const hasSelectedQuote = selectedQuoteIndex !== null;
+  const showGeneratedQuotes = generatedQuotes.length > 0;
+
+  return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
@@ -179,7 +186,7 @@ export default function Home() {
 
           <Button onClick={shareQuote} disabled={!hasSelectedQuote} variant="outline" className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50">
             <Share2 className="h-5 w-5" />
-            <span>Share</span>
+            <span>Share on X</span>
           </Button>
           
           <Button onClick={() => setIsLiked(!isLiked)} disabled={!hasSelectedQuote} variant="outline" className={`border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${!hasSelectedQuote ? 'opacity-50 cursor-not-allowed' : isLiked ? 'text-red-600 border-red-300 bg-red-50 hover:bg-red-100' : 'text-slate-700 hover:bg-slate-50'}`}>
@@ -194,5 +201,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  );
+  );
 }
