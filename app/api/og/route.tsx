@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
               left: 0,
               right: 0,
               bottom: 0,
+              display: 'flex',
               background: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%)',
             }}
           />
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest) {
             {/* Category Badge */}
             <div
               style={{
+                display: 'flex',
                 background: 'rgba(255, 255, 255, 0.2)',
                 color: 'white',
                 padding: '12px 24px',
@@ -74,6 +76,7 @@ export async function GET(request: NextRequest) {
             {/* Quote Text */}
             <div
               style={{
+                display: 'flex',
                 fontSize: '48px',
                 fontWeight: '700',
                 color: 'white',
@@ -89,6 +92,7 @@ export async function GET(request: NextRequest) {
             {/* Author */}
             <div
               style={{
+                display: 'flex',
                 fontSize: '28px',
                 fontWeight: '500',
                 color: 'rgba(255, 255, 255, 0.9)',
