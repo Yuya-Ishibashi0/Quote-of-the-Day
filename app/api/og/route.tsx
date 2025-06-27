@@ -10,15 +10,43 @@ export async function GET(request: NextRequest) {
     const author = searchParams.get('author') || 'Unknown';
     const category = searchParams.get('category') || 'Inspiration';
 
-    // Moderate text truncation - allowing more text to display
-    const truncatedText = text.length > 150 ? text.substring(0, 147) + '...' : text;
+    // Truncate text for better display
+    const truncatedText = text.length > 120 ? text.substring(0, 117) + '...' : text;
 
-    // More generous font sizing for readability
+    // Load custom font
+    let fontData;
+    try {
+      const fontUrl = new URL('../../assets/NotoSansJP-Bold.otf', import.meta.url);
+      const fontResponse = await fetch(fontUrl);
+      fontData = await fontResponse.arrayBuffer();
+    } catch (fontError) {
+      console.warn('Failed to load custom font, falling back to system font');
+      fontData = null;
+    }
+
+    // Dynamic font sizing based on text length
     const getFontSize = (textLength: number) => {
-      if (textLength > 100) return 42;       // Long text - still readable
-      if (textLength > 60) return 48;        // Medium text - good size
-      return 54;                             // Short text - large and impactful
+      if (textLength > 80) return 48;
+      if (textLength > 50) return 56;
+      return 64;
     };
+
+    const imageResponseOptions: any = {
+      width: 1200,
+      height: 630,
+    };
+
+    // Add fonts if custom font loaded successfully
+    if (fontData) {
+      imageResponseOptions.fonts = [
+        {
+          name: 'NotoSansJP',
+          data: fontData,
+          style: 'normal',
+          weight: 700,
+        },
+      ];
+    }
 
     return new ImageResponse(
       (
@@ -31,22 +59,21 @@ export async function GET(request: NextRequest) {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            fontFamily: 'sans-serif',
-            padding: '40px',
+            fontFamily: fontData ? '"NotoSansJP"' : 'system-ui, sans-serif',
+            padding: '50px 200px',
+            position: 'relative',
           }}
         >
-          {/* Main Content Container with clear width boundaries */}
+          {/* Main Content Container */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '90%',
-              maxWidth: '1000px',
+              width: '100%',
               height: '100%',
               textAlign: 'center',
-              padding: '50px 80px',
             }}
           >
             {/* Category Badge */}
@@ -57,18 +84,19 @@ export async function GET(request: NextRequest) {
                 justifyContent: 'center',
                 background: 'rgba(255, 255, 255, 0.25)',
                 color: 'white',
-                padding: '12px 24px',
-                borderRadius: '25px',
-                fontSize: '18px',
+                padding: '16px 32px',
+                borderRadius: '30px',
+                fontSize: '24px',
                 fontWeight: '600',
-                marginBottom: '50px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                marginBottom: '60px',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                backdropFilter: 'blur(10px)',
               }}
             >
               {category}
             </div>
 
-            {/* Quote Text with proper wrapping constraints */}
+            {/* Main Quote Text */}
             <div
               style={{
                 display: 'flex',
@@ -77,58 +105,56 @@ export async function GET(request: NextRequest) {
                 fontSize: getFontSize(truncatedText.length),
                 fontWeight: '700',
                 color: 'white',
-                lineHeight: '1.4',
-                marginBottom: '50px',
-                textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+                lineHeight: '1.3',
                 textAlign: 'center',
                 width: '100%',
                 maxWidth: '800px',
-                padding: '0 40px',
+                padding: '0 120px',
+                marginBottom: '80px',
+                textShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}
             >
               "{truncatedText}"
             </div>
+          </div>
 
-            {/* Author */}
+          {/* Author - Bottom Right */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '60px',
+              right: '80px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              color: 'rgba(255, 255, 255, 0.95)',
+              textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            }}
+          >
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '28px',
-                fontWeight: '500',
-                color: 'rgba(255, 255, 255, 0.9)',
-                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-                marginTop: '30px',
+                fontSize: '32px',
+                fontWeight: '600',
+                marginBottom: '8px',
               }}
             >
               — {author}
             </div>
-          </div>
-
-          {/* Bottom Branding */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '30px',
-              right: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '16px',
-              fontWeight: '500',
-            }}
-          >
-            Quote of the Day
+            <div
+              style={{
+                fontSize: '18px',
+                fontWeight: '400',
+                opacity: 0.8,
+              }}
+            >
+              Quote of the Day
+            </div>
           </div>
         </div>
       ),
-      {
-        width: 1200,
-        height: 630,
-      }
+      imageResponseOptions
     );
   } catch (error) {
     console.error('Error generating OG image:', error);
