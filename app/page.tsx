@@ -16,46 +16,66 @@ interface Quote {
 }
 
 export default function Home() {
-  const [currentQuote, setCurrentQuote] = useState<Quote | null>(null);
-  const [userInput, setUserInput] = useState('');
-  const [authorName, setAuthorName] = useState('');
-  const [generatedQuotes, setGeneratedQuotes] = useState<Quote[]>([]);
-  const [selectedQuoteIndex, setSelectedQuoteIndex] = useState<number | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAIGenerated, setIsAIGenerated] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState<Quote>(defaultQuotes[0]);
+  const [userInput, setUserInput] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [generatedQuotes, setGeneratedQuotes] = useState<Quote[]>([]);
+  const [selectedQuoteIndex, setSelectedQuoteIndex] = useState<number | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
 
-  const generateAIQuote = async () => {
-    if (!userInput.trim() || !authorName.trim()) {
-      alert('Please fill out your name and thoughts!');
-      return;
-    }
-    setIsLoading(true);
-    setCurrentQuote(null);
-    setGeneratedQuotes([]);
-    setSelectedQuoteIndex(null);
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userInput, authorName: authorName.trim() }),
-      });
-      if (!response.ok) { throw new Error('Failed to generate quote'); }
-      const data = await response.json();
-      if (data.quotes && data.quotes.length > 0) {
-        setGeneratedQuotes(data.quotes);
-        setIsAIGenerated(true);
-        setIsLiked(false);
-      } else {
-        throw new Error('No quotes received');
-      }
-    } catch (error) {
-      console.error('Error generating quote:', error);
-      alert('Sorry, there was an error generating your personalized quote.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    // Set a random quote as the quote of the day
+    const randomQuote = defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)];
+    setCurrentQuote(randomQuote);
+  }, []);
+
+  const generateAIQuote = async () => {
+    if (!userInput.trim()) {
+      alert('Please share your thoughts first!');
+      return;
+    }
+
+    if (!authorName.trim()) {
+      alert('Please enter your name or handle!');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          prompt: userInput,
+          authorName: authorName.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate quote');
+      }
+
+      const data = await response.json();
+      
+      if (data.quotes && data.quotes.length > 0) {
+        setGeneratedQuotes(data.quotes);
+        setSelectedQuoteIndex(null);
+        setIsAIGenerated(true);
+        setIsLiked(false);
+      } else {
+        throw new Error('No quotes received');
+      }
+    } catch (error) {
+      console.error('Error generating quote:', error);
+      alert('Sorry, there was an error generating your personalized quote. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const selectQuote = (index: number) => {
     setSelectedQuoteIndex(index);
@@ -63,39 +83,38 @@ export default function Home() {
     setIsLiked(false);
   };
 
-  const saveQuoteToArchive = () => {
-    if (!currentQuote) {
-      alert('Please select a quote to save.');
-      return;
-    }
-    try {
-      const existingArchive = localStorage.getItem('quoteArchive');
-      const archive: Quote[] = existingArchive ? JSON.parse(existingArchive) : [];
-      if (archive.some(q => q.text === currentQuote.text)) {
-        alert('This quote is already in your archive!');
-        return;
-      }
-      const newArchive = [...archive, { ...currentQuote, id: Date.now() }];
-      localStorage.setItem('quoteArchive', JSON.stringify(newArchive));
-      alert('Quote saved to your archive!');
-    } catch (error) {
-      console.error('Failed to save quote:', error);
-      alert('Sorry, there was an error saving your quote.');
-    }
+  const getRandomQuote = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      const randomQuote = defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)];
+      setCurrentQuote(randomQuote);
+      setGeneratedQuotes([]);
+      setSelectedQuoteIndex(null);
+      setIsLiked(false);
+      setIsAIGenerated(false);
+      setIsLoading(false);
+    }, 500);
   };
 
-  const shareQuote = async () => {
-    if (!currentQuote) return;
-    const text = `"${currentQuote.text}" - ${currentQuote.author}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Quote of the Day', text: text, url: window.location.href });
-      } catch (err) { console.log('Error sharing:', err); }
-    } else {
-      navigator.clipboard.writeText(text);
-      alert('Quote copied to clipboard!');
-    }
-  };
+  const shareQuote = async () => {
+    const text = `"${currentQuote.text}" - ${currentQuote.author}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Quote of the Day',
+          text: text,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(text);
+      alert('Quote copied to clipboard!');
+    }
+  };
 
   const hasSelectedQuote = selectedQuoteIndex !== null;
   const showGeneratedQuotes = generatedQuotes.length > 0;
@@ -179,7 +198,7 @@ export default function Home() {
 
           <Button onClick={shareQuote} disabled={!hasSelectedQuote} variant="outline" className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50">
             <Share2 className="h-5 w-5" />
-            <span>Share</span>
+            <span>Share on X</span>
           </Button>
           
           <Button onClick={() => setIsLiked(!isLiked)} disabled={!hasSelectedQuote} variant="outline" className={`border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${!hasSelectedQuote ? 'opacity-50 cursor-not-allowed' : isLiked ? 'text-red-600 border-red-300 bg-red-50 hover:bg-red-100' : 'text-slate-700 hover:bg-slate-50'}`}>
