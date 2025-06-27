@@ -3,11 +3,18 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, authorName } = await request.json();
 
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json(
         { error: 'Prompt is required and must be a string' },
+        { status: 400 }
+      );
+    }
+
+    if (!authorName || typeof authorName !== 'string') {
+      return NextResponse.json(
+        { error: 'Author name is required and must be a string' },
         { status: 400 }
       );
     }
@@ -27,38 +34,45 @@ export async function POST(request: NextRequest) {
 
 User input: "${prompt}"
 
+IMPORTANT: Generate ONLY the quote text and category. Do NOT include any author information - that will be added separately.
+
 Please respond with a JSON array containing exactly 3 objects, each with the following structure:
 {
   "text": "The quote text",
-  "author": "A fitting author name (can be real or inspirational pseudonym)",
   "category": "A relevant category for the quote"
 }
 
-Make sure the response is valid JSON and nothing else.`;
+Make sure the response is valid JSON and nothing else. Do not include any author field.`;
 
     const result = await model.generateContent(aiPrompt);
     const response = await result.response;
     let text = response.text();
 
     if (text.startsWith('```json')) {
-    text = text.slice(7, -3);
+      text = text.slice(7, -3);
     }
 
     try {
-    // Parse the JSON response from the AI
-    const quotes = JSON.parse(text);
+      // Parse the JSON response from the AI
+      const aiQuotes = JSON.parse(text);
       
       // Validate the response structure
-      if (!Array.isArray(quotes) || quotes.length !== 3) {
+      if (!Array.isArray(aiQuotes) || aiQuotes.length !== 3) {
         throw new Error('Invalid response format');
       }
 
-      // Validate each quote object
-      for (const quote of quotes) {
-        if (!quote.text || !quote.author || !quote.category) {
+      // Validate each quote object and add the author name
+      const quotes = aiQuotes.map((quote, index) => {
+        if (!quote.text || !quote.category) {
           throw new Error('Invalid quote structure');
         }
-      }
+        
+        return {
+          text: quote.text,
+          author: authorName,
+          category: quote.category
+        };
+      });
 
       return NextResponse.json({ quotes });
     } catch (parseError) {
@@ -69,12 +83,12 @@ Make sure the response is valid JSON and nothing else.`;
       );
     }
   } catch (error) {
-    console.error('--- DETAILED API ERROR ---');
-    console.error(error);
-    console.error('--- END OF ERROR ---');
-    return NextResponse.json(
-      { error: 'Failed to generate quotes' },
-      { status: 500 }
-    );
-  }
+    console.error('--- DETAILED API ERROR ---');
+    console.error(error);
+    console.error('--- END OF ERROR ---');
+    return NextResponse.json(
+      { error: 'Failed to generate quotes' },
+      { status: 500 }
+    );
+  }
 }
