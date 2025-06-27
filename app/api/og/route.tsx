@@ -112,6 +112,7 @@ export async function GET(request: NextRequest) {
           >
             <div
               style={{
+                display: 'flex',
                 fontSize: '32px',
                 fontWeight: '600',
                 marginBottom: '8px',
@@ -121,6 +122,7 @@ export async function GET(request: NextRequest) {
             </div>
             <div
               style={{
+                display: 'flex',
                 fontSize: '18px',
                 fontWeight: '400',
                 opacity: 0.8,
