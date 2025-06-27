@@ -9,14 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Share2, Heart, Sparkles, Check, Archive } from 'lucide-react';
 
 interface Quote {
-  id?: number;
-  text: string;
-  author: string;
-  category: string;
+  id?: number;
+  text: string;
+  author: string;
+  category: string;
 }
 
 export default function Home() {
-  const [currentQuote, setCurrentQuote] = useState<Quote>(defaultQuotes[0]);
+  const [currentQuote, setCurrentQuote] = useState<Quote | null>(null);
   const [userInput, setUserInput] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [generatedQuotes, setGeneratedQuotes] = useState<Quote[]>([]);
@@ -25,45 +25,25 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAIGenerated, setIsAIGenerated] = useState(false);
 
-  useEffect(() => {
-    // Set a random quote as the quote of the day
-    const randomQuote = defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)];
-    setCurrentQuote(randomQuote);
-  }, []);
-
   const generateAIQuote = async () => {
-    if (!userInput.trim()) {
-      alert('Please share your thoughts first!');
+    if (!userInput.trim() || !authorName.trim()) {
+      alert('Please fill out your name and thoughts!');
       return;
     }
-
-    if (!authorName.trim()) {
-      alert('Please enter your name or handle!');
-      return;
-    }
-
     setIsLoading(true);
+    setCurrentQuote(null);
+    setGeneratedQuotes([]);
+    setSelectedQuoteIndex(null);
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          prompt: userInput,
-          authorName: authorName.trim()
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userInput, authorName: authorName.trim() }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate quote');
-      }
-
+      if (!response.ok) { throw new Error('Failed to generate quote'); }
       const data = await response.json();
-      
       if (data.quotes && data.quotes.length > 0) {
         setGeneratedQuotes(data.quotes);
-        setSelectedQuoteIndex(null);
         setIsAIGenerated(true);
         setIsLiked(false);
       } else {
@@ -71,55 +51,63 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error generating quote:', error);
-      alert('Sorry, there was an error generating your personalized quote. Please try again.');
+      alert('Sorry, there was an error generating your personalized quote.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const selectQuote = (index: number) => {
-    setSelectedQuoteIndex(index);
-    setCurrentQuote(generatedQuotes[index]);
-    setIsLiked(false);
-  };
-
-  const getRandomQuote = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const randomQuote = defaultQuotes[Math.floor(Math.random() * defaultQuotes.length)];
-      setCurrentQuote(randomQuote);
-      setGeneratedQuotes([]);
-      setSelectedQuoteIndex(null);
-      setIsLiked(false);
-      setIsAIGenerated(false);
-      setIsLoading(false);
-    }, 500);
+  const selectQuote = (index: number) => {
+    setSelectedQuoteIndex(index);
+    setCurrentQuote(generatedQuotes[index]);
+    setIsLiked(false);
   };
 
-  const shareQuote = async () => {
-    const text = `"${currentQuote.text}" - ${currentQuote.author}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Quote of the Day',
-          text: text,
-          url: window.location.href,
-        });
-      } catch (err) {
-        console.log('Error sharing:', err);
+  const saveQuoteToArchive = () => {
+    if (!currentQuote) {
+      alert('Please select a quote to save.');
+      return;
+    }
+    try {
+      const existingArchive = localStorage.getItem('quoteArchive');
+      const archive: Quote[] = existingArchive ? JSON.parse(existingArchive) : [];
+      if (archive.some(q => q.text === currentQuote.text)) {
+        alert('This quote is already in your archive!');
+        return;
       }
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(text);
-      alert('Quote copied to clipboard!');
+      const newArchive = [...archive, { ...currentQuote, id: Date.now() }];
+      localStorage.setItem('quoteArchive', JSON.stringify(newArchive));
+      alert('Quote saved to your archive!');
+    } catch (error) {
+      console.error('Failed to save quote:', error);
+      alert('Sorry, there was an error saving your quote.');
     }
   };
 
-  const hasSelectedQuote = selectedQuoteIndex !== null;
-  const showGeneratedQuotes = generatedQuotes.length > 0;
+  const shareQuote = () => {
+    if (!currentQuote) return;
 
-  return (
+    // Construct the URL for our dynamic quote page
+    const baseUrl = window.location.origin;
+    const quoteUrl = new URL('/q', baseUrl);
+    quoteUrl.searchParams.set('text', currentQuote.text);
+    quoteUrl.searchParams.set('author', currentQuote.author);
+    quoteUrl.searchParams.set('category', currentQuote.category);
+
+    // Construct Twitter Web Intent URL
+    const tweetText = 'I created a new quote from my daily thoughts! Check it out:';
+    const twitterUrl = new URL('https://twitter.com/intent/tweet');
+    twitterUrl.searchParams.set('text', tweetText);
+    twitterUrl.searchParams.set('url', quoteUrl.toString());
+
+    // Open Twitter intent in new tab
+    window.open(twitterUrl.toString(), '_blank');
+  };
+
+  const hasSelectedQuote = selectedQuoteIndex !== null;
+  const showGeneratedQuotes = generatedQuotes.length > 0;
+
+  return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
@@ -213,5 +201,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  );
+  );
 }
