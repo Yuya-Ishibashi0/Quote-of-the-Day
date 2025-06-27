@@ -13,17 +13,6 @@ export async function GET(request: NextRequest) {
     // Truncate text for better display
     const truncatedText = text.length > 120 ? text.substring(0, 117) + '...' : text;
 
-    // Load custom font
-    let fontData;
-    try {
-      const fontUrl = new URL('../../assets/NotoSansJP-Bold.otf', import.meta.url);
-      const fontResponse = await fetch(fontUrl);
-      fontData = await fontResponse.arrayBuffer();
-    } catch (fontError) {
-      console.warn('Failed to load custom font, falling back to system font');
-      fontData = null;
-    }
-
     // Dynamic font sizing based on text length
     const getFontSize = (textLength: number) => {
       if (textLength > 80) return 48;
@@ -36,18 +25,6 @@ export async function GET(request: NextRequest) {
       height: 630,
     };
 
-    // Add fonts if custom font loaded successfully
-    if (fontData) {
-      imageResponseOptions.fonts = [
-        {
-          name: 'NotoSansJP',
-          data: fontData,
-          style: 'normal',
-          weight: 700,
-        },
-      ];
-    }
-
     return new ImageResponse(
       (
         <div
@@ -59,7 +36,7 @@ export async function GET(request: NextRequest) {
             alignItems: 'center',
             justifyContent: 'center',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            fontFamily: fontData ? '"NotoSansJP"' : 'system-ui, sans-serif',
+            fontFamily: 'system-ui, sans-serif',
             padding: '50px 200px',
             position: 'relative',
           }}
