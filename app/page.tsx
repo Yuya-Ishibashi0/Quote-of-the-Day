@@ -23,6 +23,7 @@ export default function Home() {
   const [selectedQuoteIndex, setSelectedQuoteIndex] = useState<number | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isAIGenerated, setIsAIGenerated] = useState(false);
 
   const generateAIQuote = async () => {
@@ -63,24 +64,46 @@ export default function Home() {
     setIsLiked(false);
   };
 
-  const saveQuoteToArchive = () => {
+  const saveQuoteToArchive = async () => {
     if (!currentQuote) {
       alert('Please select a quote to save.');
       return;
     }
+
+    setIsSaving(true);
     try {
-      const existingArchive = localStorage.getItem('quoteArchive');
-      const archive: Quote[] = existingArchive ? JSON.parse(existingArchive) : [];
-      if (archive.some(q => q.text === currentQuote.text)) {
-        alert('This quote is already in your archive!');
-        return;
+      // Construct the absolute URL for the OG image
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      const imageUrl = new URL('/api/og', baseUrl);
+      imageUrl.searchParams.set('text', currentQuote.text);
+      imageUrl.searchParams.set('author', currentQuote.author);
+      imageUrl.searchParams.set('category', currentQuote.category);
+
+      // Save to Supabase via API
+      const response = await fetch('/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: currentQuote.text,
+          author: currentQuote.author,
+          category: currentQuote.category,
+          imageUrl: imageUrl.toString()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save quote');
       }
-      const newArchive = [...archive, { ...currentQuote, id: Date.now() }];
-      localStorage.setItem('quoteArchive', JSON.stringify(newArchive));
-      alert('Quote saved to your archive!');
+
+      const data = await response.json();
+      alert(data.message || 'Quote saved to your archive!');
     } catch (error) {
       console.error('Failed to save quote:', error);
-      alert('Sorry, there was an error saving your quote.');
+      alert('Sorry, there was an error saving your quote. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -179,9 +202,14 @@ export default function Home() {
             <span>{isLoading ? 'Generating...' : 'Generate My Quote'}</span>
           </Button>
           
-          <Button onClick={saveQuoteToArchive} disabled={!hasSelectedQuote} variant="outline" className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50">
-            <Archive className="h-5 w-5" />
-            <span>Save to Archive</span>
+          <Button 
+            onClick={saveQuoteToArchive} 
+            disabled={!hasSelectedQuote || isSaving} 
+            variant="outline" 
+            className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50"
+          >
+            <Archive className={`h-5 w-5 ${isSaving ? 'animate-spin' : ''}`} />
+            <span>{isSaving ? 'Saving...' : 'Save to Archive'}</span>
           </Button>
 
           <Button onClick={shareQuote} disabled={!hasSelectedQuote} variant="outline" className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50">
