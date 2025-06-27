@@ -56,7 +56,7 @@ export default function Home() {
       if (data.quotes && data.quotes.length > 0) {
         setGeneratedQuotes(data.quotes);
         setSelectedQuoteIndex(null);
-        setCurrentQuote(data.quotes[0]); // Immediately set the first generated quote as current
+        setCurrentQuote(data.quotes[0]);
         setIsAIGenerated(true);
         setIsLiked(false);
       } else {
@@ -90,7 +90,8 @@ export default function Home() {
   };
 
   const shareQuote = async () => {
-    if (!currentQuote) return;
+    // currentQuoteがnullの可能性があるため、チェックを追加
+    if (!currentQuote) return; 
     const text = `"${currentQuote.text}" - ${currentQuote.author}`;
     if (navigator.share) {
       try {
@@ -108,7 +109,7 @@ export default function Home() {
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header Section */}
+        {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-5xl sm:text-6xl font-bold text-slate-900 mb-4">Today's <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Inspiration</span></h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">Share your thoughts and get personalized quotes with your name, or discover daily wisdom from our curated collection.</p>
@@ -145,8 +146,7 @@ export default function Home() {
                       {selectedQuoteIndex === index && (<Check className="h-5 w-5 text-blue-600" />)}
                     </div>
                     <blockquote className="text-sm text-slate-800 leading-relaxed font-serif">"{quote.text}"</blockquote>
-                      {/* THIS IS THE CORRECTED PART */}
-                      <div className="text-xs text-slate-600 font-medium"> — {quote.author} </div>
+                    <div className="text-xs text-slate-600 font-medium"> — {quote.author} </div>
                   </div>
                 </Card>
               ))}
@@ -156,21 +156,21 @@ export default function Home() {
         
         {/* Main Quote Display */}
         {currentQuote && (
-        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl shadow-blue-100/50 p-8 sm:p-12 mb-8 transform hover:scale-[1.02] transition-all duration-300">
-            <div className="text-center">
-              <div className="mb-6 flex items-center justify-center space-x-2">
-                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{currentQuote.category}</span>
-                {isAIGenerated && (<span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full flex items-center space-x-1"><Sparkles className="h-3 w-3" /><span>Personal Quote</span></span>)}
-              </div>
-              <blockquote className="text-2xl sm:text-3xl lg:text-4xl font-serif text-slate-800 leading-relaxed mb-8 relative">
-                <span className="text-6xl text-blue-200 absolute -top-4 -left-4 font-serif">"</span>
-                {currentQuote.text}
-                <span className="text-6xl text-blue-200 absolute -bottom-8 -right-4 font-serif">"</span>
-              </blockquote>
-              <div className="text-xl text-slate-600 font-medium"> — {currentQuote.author}</div>
-            </div>
-          </Card>
-      )}
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl shadow-blue-100/50 p-8 sm:p-12 mb-8 transform hover:scale-[1.02] transition-all duration-300">
+            <div className="text-center">
+              <div className="mb-6 flex items-center justify-center space-x-2">
+                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">{currentQuote.category}</span>
+                {isAIGenerated && (<span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full flex items-center space-x-1"><Sparkles className="h-3 w-3" /><span>Personal Quote</span></span>)}
+              </div>
+              <blockquote className="text-2xl sm:text-3xl lg:text-4xl font-serif text-slate-800 leading-relaxed mb-8 relative">
+                <span className="text-6xl text-blue-200 absolute -top-4 -left-4 font-serif">"</span>
+                {currentQuote.text}
+                <span className="text-6xl text-blue-200 absolute -bottom-8 -right-4 font-serif">"</span>
+              </blockquote>
+              <div className="text-xl text-slate-600 font-medium"> — {currentQuote.author}</div>
+            </div>
+          </Card>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -192,7 +192,7 @@ export default function Home() {
           </Button>
         </div>
 
-        {/* Footer Section */}
+        {/* Footer Section */}
         <div className="mt-16 text-center">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Personal Wisdom</h2>
           <p className="text-slate-600 max-w-2xl mx-auto">Enter your name and share your thoughts to create personalized quotes that reflect your unique perspective. Your wisdom, your words, your inspiration.</p>
