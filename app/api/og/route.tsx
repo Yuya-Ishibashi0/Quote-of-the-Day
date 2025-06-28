@@ -16,28 +16,17 @@ export async function GET(req: NextRequest) {
     ? text.slice(0, 147) + '…'
     : text
 
-  // 2) 文字数で段階的にフォント＆余白を調整
-  //    特に中長文(60～90文字)の余白を大きく取るようしきい値を修正
+  // 2) 文字数で段階的にフォントサイズを調整
   let fontSize: number
-  let quoteMargin: number
   const len = truncated.length
-
   if (len > 120) {
-    // 非常に長い文
-    fontSize    = 36
-    quoteMargin = 48
+    fontSize = 36
   } else if (len > 90) {
-    // 長めの文
-    fontSize    = 44
-    quoteMargin = 64
+    fontSize = 44
   } else if (len > 60) {
-    // 中長文 → 余白を拡大
-    fontSize    = 52
-    quoteMargin = 120   // ← ここを 80→120 に増やしました
+    fontSize = 52
   } else {
-    // 短い文
-    fontSize    = 64
-    quoteMargin = 140
+    fontSize = 64
   }
 
   // 3) ImageResponse で OG 画像を返す
@@ -50,13 +39,13 @@ export async function GET(req: NextRequest) {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'flex-start',        // ← space-between を外す
+          justifyContent: 'flex-start',            // ← space-between を外し flex-start へ
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           fontFamily: 'Noto Sans, system-ui, sans-serif',
           padding: '48px 160px',
         }}
       >
-        {/* Category Badge */}
+        {/* 1. Category Badge */}
         <div
           style={{
             display: 'flex',
@@ -72,7 +61,7 @@ export async function GET(req: NextRequest) {
           {category}
         </div>
 
-        {/* Quote Text */}
+        {/* 2. Quote Text */}
         <div
           style={{
             display: 'flex',
@@ -87,20 +76,23 @@ export async function GET(req: NextRequest) {
             overflowWrap: 'break-word',
             wordBreak: 'break-word',
             textShadow: '0 4px 12px rgba(0,0,0,0.4)',
-            /* marginBottom: ○○ は不要 */
+            // marginBottom を削除
           }}
         >
           “{truncated}”
         </div>
 
-        {/* Author */}
+        {/* 3. Spacer: この要素が空き領域を埋める */}
+        <div style={{ flex: 1 }} />
+
+        {/* 4. Author */}
         <div
           style={{
             display: 'flex',
             fontSize: 32,
             fontWeight: 600,
             color: '#ffffffe6',
-            marginTop: 'auto',               // ← Author を常に下端に固定
+            marginTop: 32,
           }}
         >
           — {author}
