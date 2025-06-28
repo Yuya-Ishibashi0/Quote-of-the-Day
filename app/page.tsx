@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { Share2, Heart, Sparkles, Check, Archive } from 'lucide-react';
 
 interface Quote {
@@ -16,6 +17,7 @@ interface Quote {
 }
 
 export default function Home() {
+  const { toast } = useToast();
   const [currentQuote, setCurrentQuote] = useState<Quote | null>(null);
   const [userInput, setUserInput] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -28,7 +30,11 @@ export default function Home() {
 
   const generateAIQuote = async () => {
     if (!userInput.trim() || !authorName.trim()) {
-      alert('Please fill out your name and thoughts!');
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please fill out your name and thoughts!',
+      });
       return;
     }
     setIsLoading(true);
@@ -47,12 +53,20 @@ export default function Home() {
         setGeneratedQuotes(data.quotes);
         setIsAIGenerated(true);
         setIsLiked(false);
+        toast({
+          title: 'Success',
+          description: 'Your personalized quotes have been generated!',
+        });
       } else {
         throw new Error('No quotes received');
       }
     } catch (error) {
       console.error('Error generating quote:', error);
-      alert('Sorry, there was an error generating your personalized quote.');
+      toast({
+        variant: 'destructive',
+        title: 'Generation Error',
+        description: 'Sorry, there was an error generating your personalized quote.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +80,11 @@ export default function Home() {
 
   const saveQuoteToArchive = async () => {
     if (!currentQuote) {
-      alert('Please select a quote to save.');
+      toast({
+        variant: 'destructive',
+        title: 'No Quote Selected',
+        description: 'Please select a quote to save.',
+      });
       return;
     }
 
@@ -98,10 +116,17 @@ export default function Home() {
       }
 
       const data = await response.json();
-      alert(data.message || 'Quote saved to your archive!');
+      toast({
+        title: 'Success',
+        description: 'Your quote has been saved to the archive.',
+      });
     } catch (error) {
       console.error('Failed to save quote:', error);
-      alert('Sorry, there was an error saving your quote. Please try again.');
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Sorry, there was an error saving your quote. Please try again.',
+      });
     } finally {
       setIsSaving(false);
     }
