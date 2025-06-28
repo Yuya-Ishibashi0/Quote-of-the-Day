@@ -1,8 +1,7 @@
-// app/api/og/route.ts
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 export const runtime = 'edge'
+export const revalidate = 0
 
 import { ImageResponse } from '@vercel/og'
 import { NextRequest } from 'next/server'
@@ -86,7 +85,10 @@ export async function GET(req: NextRequest) {
     ),
     {
       width: 1200,
-      height: 630,
+      height: 630,    
+      headers: {
+        'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate',
+      },
     }
   )
 }
