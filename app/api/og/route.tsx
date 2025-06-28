@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
           overflowWrap: 'break-word',
           wordBreak: 'break-word',
           textShadow: '0 4px 12px rgba(0,0,0,.4)',
-          marginBottom: 0,//marginBottom: 72,
+          marginBottom: 72,//marginBottom: 72,
         }}
       >
         “{truncated}”
