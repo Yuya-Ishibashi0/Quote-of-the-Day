@@ -1,4 +1,4 @@
-// app/api/og/route.tsx
+// app/api/og/route.ts
 
 import { ImageResponse } from '@vercel/og'
 import { NextRequest } from 'next/server'
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
             textShadow: '0 4px 12px rgba(0,0,0,0.4)',
           }}
         >
-          “{truncated}”
+          "{truncated}"
         </div>
       </div>
     ),
