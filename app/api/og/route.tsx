@@ -8,7 +8,6 @@ export const runtime = 'edge'
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const text     = searchParams.get('text')     ?? 'No quote provided'
-  const author   = searchParams.get('author')   ?? 'Unknown'
   const category = searchParams.get('category') ?? 'Inspiration'
 
   // 1) テキストを安全にトリム
@@ -42,12 +41,11 @@ export async function GET(req: NextRequest) {
           justifyContent: 'flex-start',
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           fontFamily: 'Noto Sans, system-ui, sans-serif',
-          // 上:48px, 右/左:160px, 下:120px を確保
           padding: '48px 160px 120px',
           position: 'relative',
         }}
       >
-        {/* 1. Category Badge */}
+        {/* Category Badge */}
         <div
           style={{
             display: 'flex',
@@ -63,7 +61,7 @@ export async function GET(req: NextRequest) {
           {category}
         </div>
 
-        {/* 2. Quote Text */}
+        {/* Quote Text */}
         <div
           style={{
             display: 'flex',
@@ -78,32 +76,9 @@ export async function GET(req: NextRequest) {
             overflowWrap: 'break-word',
             wordBreak: 'break-word',
             textShadow: '0 4px 12px rgba(0,0,0,0.4)',
-            // marginBottom は不要
           }}
         >
           “{truncated}”
-        </div>
-
-        {/* 3. Author (絶対配置で常に下:32px の位置に) */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 32,
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <span
-            style={{
-              fontSize: 32,
-              fontWeight: 600,
-              color: '#ffffffe6',
-            }}
-          >
-            — {author}
-          </span>
         </div>
       </div>
     ),
