@@ -1,128 +1,90 @@
-import { ImageResponse } from '@vercel/og';
-import { NextRequest } from 'next/server';
+// app/api/og/route.ts
 
-export const runtime = 'edge';
+import { ImageResponse } from '@vercel/og'
+import { NextRequest } from 'next/server'
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const text = searchParams.get('text') || 'No quote provided';
-    const author = searchParams.get('author') || 'Unknown';
-    const category = searchParams.get('category') || 'Inspiration';
+export const runtime = 'edge'
 
-    // Truncate text if too long for the image
-    const truncatedText = text.length > 200 ? text.substring(0, 197) + '...' : text;
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const text     = searchParams.get('text')     ?? 'No quote provided'
+  const category = searchParams.get('category') ?? 'Inspiration'
 
-    return new ImageResponse(
-      (
+  // 1) テキストを安全にトリム
+  const truncated = text.length > 150
+    ? text.slice(0, 147) + '…'
+    : text
+
+  // 2) 文字数で段階的にフォントサイズを調整
+  let fontSize: number
+  const len = truncated.length
+  if (len > 120) {
+    fontSize = 36
+  } else if (len > 90) {
+    fontSize = 44
+  } else if (len > 60) {
+    fontSize = 52
+  } else {
+    fontSize = 64
+  }
+
+  // 3) ImageResponse で OG 画像を返す
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          fontFamily: 'Noto Sans, system-ui, sans-serif',
+          padding: '48px 160px 120px',
+          position: 'relative',
+        }}
+      >
+        {/* Category Badge */}
         <div
           style={{
-            height: '100%',
-            width: '100%',
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            position: 'relative',
+            padding: '12px 28px',
+            borderRadius: 30,
+            background: 'rgba(255,255,255,0.25)',
+            border: '2px solid rgba(255,255,255,0.3)',
+            color: '#fff',
+            fontSize: 24,
+            marginBottom: 48,
           }}
         >
-          {/* Background Pattern */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%)',
-            }}
-          />
-          
-          {/* Content Container */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '80px',
-              maxWidth: '900px',
-              textAlign: 'center',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            {/* Category Badge */}
-            <div
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                color: 'white',
-                padding: '12px 24px',
-                borderRadius: '25px',
-                fontSize: '18px',
-                fontWeight: '600',
-                marginBottom: '40px',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-              }}
-            >
-              {category}
-            </div>
-
-            {/* Quote Text */}
-            <div
-              style={{
-                fontSize: '48px',
-                fontWeight: '700',
-                color: 'white',
-                lineHeight: '1.2',
-                marginBottom: '40px',
-                textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-                fontFamily: 'Georgia, serif',
-              }}
-            >
-              "{truncatedText}"
-            </div>
-
-            {/* Author */}
-            <div
-              style={{
-                fontSize: '28px',
-                fontWeight: '500',
-                color: 'rgba(255, 255, 255, 0.9)',
-                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-              }}
-            >
-              — {author}
-            </div>
-          </div>
-
-          {/* Bottom Branding */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '30px',
-              right: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '16px',
-              fontWeight: '500',
-            }}
-          >
-            Quote of the Day
-          </div>
+          {category}
         </div>
-      ),
-      {
-        width: 1200,
-        height: 630,
-      }
-    );
-  } catch (error) {
-    console.error('Error generating OG image:', error);
-    return new Response('Failed to generate image', { status: 500 });
-  }
+
+        {/* Quote Text */}
+        <div
+          style={{
+            display: 'flex',
+            fontSize,
+            fontWeight: 700,
+            color: '#fff',
+            lineHeight: 1.4,
+            textAlign: 'center',
+            maxWidth: 800,
+            padding: '0 120px',
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word',
+            textShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          }}
+        >
+          "{truncated}"
+        </div>
+      </div>
+    ),
+    {
+      width: 1200,
+      height: 630,
+    }
+  )
 }
