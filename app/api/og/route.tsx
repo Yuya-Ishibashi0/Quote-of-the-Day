@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start',        // ← space-between を外す
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           fontFamily: 'Noto Sans, system-ui, sans-serif',
           padding: '48px 160px',
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
             overflowWrap: 'break-word',
             wordBreak: 'break-word',
             textShadow: '0 4px 12px rgba(0,0,0,0.4)',
-            marginBottom: quoteMargin,
+            /* marginBottom: ○○ は不要 */
           }}
         >
           “{truncated}”
@@ -100,6 +100,7 @@ export async function GET(req: NextRequest) {
             fontSize: 32,
             fontWeight: 600,
             color: '#ffffffe6',
+            marginTop: 'auto',               // ← Author を常に下端に固定
           }}
         >
           — {author}
