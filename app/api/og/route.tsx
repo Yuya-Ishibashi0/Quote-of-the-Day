@@ -87,6 +87,9 @@ export async function GET(req: NextRequest) {
     {
       width: 1200,
       height: 630,
-    }
+      //ブラウザのキャッシュを無効化
+      headers: {
+      'Cache-Control': 'no-store, no-cache, max-age=0, must-revalidate',
+    },
   )
 }
