@@ -1,19 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Share2, Heart, Sparkles, Check, Archive } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import { Share2, Heart, Sparkles, Check, Archive, Calendar, User } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import Image from 'next/image';
 
 interface Quote {
   id?: number;
   text: string;
   author: string;
   category: string;
+  created_at?: string;
+  image_url?: string | null;
 }
 
 export default function Home() {
@@ -27,6 +38,31 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isAIGenerated, setIsAIGenerated] = useState(false);
+  const [archivedQuotes, setArchivedQuotes] = useState<Quote[]>([]);
+
+  // Fetch archived quotes on component mount
+  useEffect(() => {
+    const fetchArchivedQuotes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('quotes')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (error) {
+          console.error('Error fetching archived quotes:', error);
+          return;
+        }
+
+        setArchivedQuotes(data || []);
+      } catch (error) {
+        console.error('Error fetching archived quotes:', error);
+      }
+    };
+
+    fetchArchivedQuotes();
+  }, []);
 
   const generateAIQuote = async () => {
     if (!userInput.trim() || !authorName.trim()) {
@@ -120,6 +156,17 @@ export default function Home() {
         title: 'Success',
         description: 'Your quote has been saved to the archive.',
       });
+
+      // Refresh archived quotes to include the newly saved quote
+      const { data: updatedQuotes, error } = await supabase
+        .from('quotes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (!error && updatedQuotes) {
+        setArchivedQuotes(updatedQuotes);
+      }
     } catch (error) {
       console.error('Failed to save quote:', error);
       toast({
@@ -150,6 +197,32 @@ export default function Home() {
 
     // Open Twitter intent in new tab
     window.open(twitterUrl.toString(), '_blank');
+  };
+
+  const shareArchivedQuote = (quote: Quote) => {
+    // Construct the URL for our dynamic quote page
+    const baseUrl = window.location.origin;
+    const quoteUrl = new URL('/q', baseUrl);
+    quoteUrl.searchParams.set('text', quote.text);
+    quoteUrl.searchParams.set('author', quote.author);
+    quoteUrl.searchParams.set('category', quote.category);
+
+    // Construct Twitter Web Intent URL
+    const tweetText = 'Check out this inspiring quote from my archive:';
+    const twitterUrl = new URL('https://twitter.com/intent/tweet');
+    twitterUrl.searchParams.set('text', tweetText);
+    twitterUrl.searchParams.set('url', quoteUrl.toString());
+
+    // Open Twitter intent in new tab
+    window.open(twitterUrl.toString(), '_blank');
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const hasSelectedQuote = selectedQuoteIndex !== null;
@@ -183,6 +256,80 @@ export default function Home() {
             </div>
           </div>
         </Card>
+
+        {/* Quote Slideshow Section */}
+        {archivedQuotes.length > 0 && (
+          <div className="mb-8">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">From Your Archive</h2>
+              <p className="text-slate-600">Your recently saved quotes</p>
+            </div>
+            
+            <Carousel className="w-full max-w-5xl mx-auto">
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {archivedQuotes.map((quote) => (
+                  <CarouselItem key={quote.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                    <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden h-full">
+                      <div className="flex flex-col h-full">
+                        {/* Quote Image */}
+                        {quote.image_url && (
+                          <div className="relative h-32 w-full">
+                            <Image
+                              src={quote.image_url}
+                              alt={`Quote by ${quote.author}`}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                          </div>
+                        )}
+                        
+                        <div className="p-4 flex-1 flex flex-col">
+                          <div className="mb-3">
+                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                              {quote.category}
+                            </span>
+                          </div>
+                          
+                          <blockquote className="flex-1 text-slate-800 text-sm leading-relaxed mb-3 font-serif line-clamp-3">
+                            "{quote.text.length > 100 ? quote.text.substring(0, 100) + '...' : quote.text}"
+                          </blockquote>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center text-slate-600 text-xs">
+                              <User className="h-3 w-3 mr-1" />
+                              {quote.author}
+                            </div>
+                            
+                            {quote.created_at && (
+                              <div className="flex items-center text-xs text-slate-500">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                {formatDate(quote.created_at)}
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-end pt-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => shareArchivedQuote(quote)}
+                                className="text-slate-500 hover:text-slate-700 transition-colors duration-200 h-8 px-2"
+                              >
+                                <Share2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
+          </div>
+        )}
 
         {showGeneratedQuotes && (
           <div className="mb-8">
