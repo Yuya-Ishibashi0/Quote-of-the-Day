@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { Search, Filter, Heart, Share2, Calendar, User } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
@@ -16,9 +17,11 @@ interface Quote {
   category: string;
   created_at: string;
   image_url?: string | null;
+  like_count?: number;
 }
 
 export default function QuotesArchive() {
+  const { toast } = useToast();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [filteredQuotes, setFilteredQuotes] = useState<Quote[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +29,7 @@ export default function QuotesArchive() {
   const [likedQuotes, setLikedQuotes] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
+  const [isLiking, setIsLiking] = useState(false);
 
   // Fetch quotes from Supabase
   useEffect(() => {
@@ -68,14 +72,81 @@ export default function QuotesArchive() {
     setFilteredQuotes(filtered);
   }, [quotes, searchTerm, selectedCategory]);
 
-  const toggleLike = (quoteId: number) => {
-    const newLikedQuotes = new Set(likedQuotes);
-    if (newLikedQuotes.has(quoteId)) {
-      newLikedQuotes.delete(quoteId);
-    } else {
-      newLikedQuotes.add(quoteId);
+  const likeQuote = async (quote: Quote) => {
+    if (likedQuotes.has(quote.id) || isLiking) {
+      return;
     }
-    setLikedQuotes(newLikedQuotes);
+
+    setIsLiking(true);
+    
+    // Optimistically update the UI
+    const newLikeCount = (quote.like_count || 0) + 1;
+    
+    // Update quotes state
+    setQuotes(prev => 
+      prev.map(q => 
+        q.id === quote.id 
+          ? { ...q, like_count: newLikeCount }
+          : q
+      )
+    );
+    
+    // Mark as liked in this session
+    setLikedQuotes(prev => new Set([...prev, quote.id]));
+
+    try {
+      const response = await fetch('/api/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: quote.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to like quote');
+      }
+
+      const data = await response.json();
+      
+      // Update with the actual like count from the server
+      setQuotes(prev => 
+        prev.map(q => 
+          q.id === quote.id 
+            ? { ...q, like_count: data.likeCount }
+            : q
+        )
+      );
+
+    } catch (error) {
+      console.error('Failed to like quote:', error);
+      
+      // Revert optimistic update on error
+      const originalLikeCount = (quote.like_count || 0);
+      
+      setQuotes(prev => 
+        prev.map(q => 
+          q.id === quote.id 
+            ? { ...q, like_count: originalLikeCount }
+            : q
+        )
+      );
+      
+      // Remove from liked set
+      setLikedQuotes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(quote.id);
+        return newSet;
+      });
+
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to like the quote. Please try again.',
+      });
+    } finally {
+      setIsLiking(false);
+    }
   };
 
   const shareQuote = (quote: Quote) => {
@@ -237,7 +308,8 @@ export default function QuotesArchive() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleLike(quote.id)}
+                          onClick={() => likeQuote(quote)}
+                          disabled={likedQuotes.has(quote.id) || isLiking}
                           className={`transition-colors duration-200 ${
                             likedQuotes.has(quote.id)
                               ? 'text-red-600 hover:text-red-700'
@@ -249,7 +321,7 @@ export default function QuotesArchive() {
                               likedQuotes.has(quote.id) ? 'fill-current' : ''
                             }`} 
                           />
-                          {likedQuotes.has(quote.id) ? 'Liked' : 'Like'}
+                          <span>{quote.like_count || 0}</span>
                         </Button>
                         
                         <Button

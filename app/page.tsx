@@ -26,6 +26,7 @@ interface Quote {
   category: string;
   created_at?: string;
   image_url?: string | null;
+  like_count?: number;
 }
 
 export default function Home() {
@@ -35,11 +36,12 @@ export default function Home() {
   const [authorName, setAuthorName] = useState('');
   const [generatedQuotes, setGeneratedQuotes] = useState<Quote[]>([]);
   const [selectedQuoteIndex, setSelectedQuoteIndex] = useState<number | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isAIGenerated, setIsAIGenerated] = useState(false);
   const [archivedQuotes, setArchivedQuotes] = useState<Quote[]>([]);
+  const [likedQuotes, setLikedQuotes] = useState<Set<number>>(new Set());
+  const [isLiking, setIsLiking] = useState(false);
 
   // Fetch archived quotes on component mount
   useEffect(() => {
@@ -89,7 +91,6 @@ export default function Home() {
       if (data.quotes && data.quotes.length > 0) {
         setGeneratedQuotes(data.quotes);
         setIsAIGenerated(true);
-        setIsLiked(false);
         toast({
           title: 'Success',
           description: 'Your personalized quotes have been generated!',
@@ -112,7 +113,6 @@ export default function Home() {
   const selectQuote = (index: number) => {
     setSelectedQuoteIndex(index);
     setCurrentQuote(generatedQuotes[index]);
-    setIsLiked(false);
   };
 
   const saveQuoteToArchive = async () => {
@@ -158,6 +158,17 @@ export default function Home() {
         description: 'Your quote has been saved to the archive.',
       });
 
+      // Update the current quote with the saved quote data (including ID)
+      if (data.quote) {
+        setCurrentQuote(data.quote);
+        // Update the generated quotes array as well
+        const updatedGeneratedQuotes = [...generatedQuotes];
+        if (selectedQuoteIndex !== null) {
+          updatedGeneratedQuotes[selectedQuoteIndex] = data.quote;
+          setGeneratedQuotes(updatedGeneratedQuotes);
+        }
+      }
+
       // Refresh archived quotes to include the newly saved quote
       const { data: updatedQuotes, error } = await supabase
         .from('quotes')
@@ -177,6 +188,96 @@ export default function Home() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const likeQuote = async (quote: Quote) => {
+    if (!quote.id || likedQuotes.has(quote.id) || isLiking) {
+      return;
+    }
+
+    setIsLiking(true);
+    
+    // Optimistically update the UI
+    const newLikeCount = (quote.like_count || 0) + 1;
+    
+    // Update current quote if it's the same
+    if (currentQuote && currentQuote.id === quote.id) {
+      setCurrentQuote({ ...currentQuote, like_count: newLikeCount });
+    }
+    
+    // Update archived quotes
+    setArchivedQuotes(prev => 
+      prev.map(q => 
+        q.id === quote.id 
+          ? { ...q, like_count: newLikeCount }
+          : q
+      )
+    );
+    
+    // Mark as liked in this session
+    setLikedQuotes(prev => new Set([...prev, quote.id!]));
+
+    try {
+      const response = await fetch('/api/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: quote.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to like quote');
+      }
+
+      const data = await response.json();
+      
+      // Update with the actual like count from the server
+      if (currentQuote && currentQuote.id === quote.id) {
+        setCurrentQuote({ ...currentQuote, like_count: data.likeCount });
+      }
+      
+      setArchivedQuotes(prev => 
+        prev.map(q => 
+          q.id === quote.id 
+            ? { ...q, like_count: data.likeCount }
+            : q
+        )
+      );
+
+    } catch (error) {
+      console.error('Failed to like quote:', error);
+      
+      // Revert optimistic update on error
+      const originalLikeCount = (quote.like_count || 0);
+      
+      if (currentQuote && currentQuote.id === quote.id) {
+        setCurrentQuote({ ...currentQuote, like_count: originalLikeCount });
+      }
+      
+      setArchivedQuotes(prev => 
+        prev.map(q => 
+          q.id === quote.id 
+            ? { ...q, like_count: originalLikeCount }
+            : q
+        )
+      );
+      
+      // Remove from liked set
+      setLikedQuotes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(quote.id!);
+        return newSet;
+      });
+
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to like the quote. Please try again.',
+      });
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -316,7 +417,26 @@ export default function Home() {
                               </div>
                             )}
                             
-                            <div className="flex justify-end pt-2">
+                            <div className="flex justify-between items-center pt-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => likeQuote(quote)}
+                                disabled={!quote.id || likedQuotes.has(quote.id) || isLiking}
+                                className={`transition-colors duration-200 h-8 px-2 ${
+                                  quote.id && likedQuotes.has(quote.id)
+                                    ? 'text-red-600 hover:text-red-700'
+                                    : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                              >
+                                <Heart 
+                                  className={`h-3 w-3 mr-1 ${
+                                    quote.id && likedQuotes.has(quote.id) ? 'fill-current' : ''
+                                  }`} 
+                                />
+                                <span className="text-xs">{quote.like_count || 0}</span>
+                              </Button>
+                              
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -397,9 +517,25 @@ export default function Home() {
             <span>Share on X</span>
           </Button>
           
-          <Button onClick={() => setIsLiked(!isLiked)} disabled={!hasSelectedQuote} variant="outline" className={`border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${!hasSelectedQuote ? 'opacity-50 cursor-not-allowed' : isLiked ? 'text-red-600 border-red-300 bg-red-50 hover:bg-red-100' : 'text-slate-700 hover:bg-slate-50'}`}>
-            <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-            <span>{isLiked ? 'Liked' : 'Like'}</span>
+          <Button 
+            onClick={() => currentQuote && likeQuote(currentQuote)} 
+            disabled={!hasSelectedQuote || !currentQuote?.id || (currentQuote?.id && likedQuotes.has(currentQuote.id)) || isLiking} 
+            variant="outline" 
+            className={`border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
+              !hasSelectedQuote || !currentQuote?.id || (currentQuote?.id && likedQuotes.has(currentQuote.id)) 
+                ? 'opacity-50 cursor-not-allowed' 
+                : currentQuote?.id && likedQuotes.has(currentQuote.id)
+                  ? 'text-red-600 border-red-300 bg-red-50 hover:bg-red-100' 
+                  : 'text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <Heart className={`h-5 w-5 ${currentQuote?.id && likedQuotes.has(currentQuote.id) ? 'fill-current' : ''}`} />
+            <span>
+              {currentQuote?.id && likedQuotes.has(currentQuote.id) 
+                ? `Liked (${currentQuote.like_count || 0})` 
+                : `Like${currentQuote?.like_count ? ` (${currentQuote.like_count})` : ''}`
+              }
+            </span>
           </Button>
         </div>
 
