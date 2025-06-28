@@ -49,8 +49,8 @@ export async function GET(req: NextRequest) {
       {/* Quote */}
       <div
         style={{
-          fontSize,
-          flex: 1, //追加
+          display: 'flex',                // ← 必須
+          fontSize,          
           fontWeight: 700,
           color: '#fff',
           lineHeight: 1.35,
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
           overflowWrap: 'break-word',
           wordBreak: 'break-word',
           textShadow: '0 4px 12px rgba(0,0,0,.4)',
-          marginBottom: 0, //marginBottom: 72から変更
+          marginBottom: 0,//marginBottom: 72,
         }}
       >
         “{truncated}”
