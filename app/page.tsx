@@ -562,7 +562,7 @@ export default function Home() {
           alt="Built with Bolt.new"
           width={80}
           height={80}
-          className="rounded-full shadow-md hover:shadow-xl transition-shadow duration-300"`
+          className="rounded-full shadow-md hover:shadow-xl transition-shadow duration-300"
         />
       </a>
     </div>
