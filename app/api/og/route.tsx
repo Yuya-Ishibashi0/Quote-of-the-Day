@@ -49,10 +49,8 @@ export async function GET(req: NextRequest) {
       {/* Quote */}
       <div
         style={{
-                          // display: 'flex',
           fontSize,
           flex: 1, //追加
-          
           fontWeight: 700,
           color: '#fff',
           lineHeight: 1.35,
