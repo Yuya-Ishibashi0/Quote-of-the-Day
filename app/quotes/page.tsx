@@ -31,7 +31,6 @@ export default function QuotesArchive() {
   const [categories, setCategories] = useState<string[]>([]);
   const [isLiking, setIsLiking] = useState(false);
 
-  // Fetch quotes from Supabase
   useEffect(() => {
     const fetchQuotes = async () => {
       try {
@@ -46,7 +45,9 @@ export default function QuotesArchive() {
         }
 
         setQuotes(data || []);
-        const uniqueCategories = Array.from(new Set(data?.map(q => q.category) || []));
+        const uniqueCategories = Array.from(
+          new Set(data?.map((q) => q.category) || [])
+        );
         setCategories(uniqueCategories);
       } catch (error) {
         console.error('Error fetching quotes:', error);
@@ -58,9 +59,8 @@ export default function QuotesArchive() {
     fetchQuotes();
   }, []);
 
-  // Filter quotes based on search and category
   useEffect(() => {
-    const filtered = quotes.filter(quote => {
+    const filtered = quotes.filter((quote) => {
       const matchesSearch =
         quote.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
         quote.author.toLowerCase().includes(searchTerm.toLowerCase());
@@ -76,12 +76,11 @@ export default function QuotesArchive() {
     if (likedQuotes.has(quote.id) || isLiking) return;
     setIsLiking(true);
 
-    // Optimistic UI update
     const newLikeCount = (quote.like_count || 0) + 1;
-    setQuotes(prev =>
-      prev.map(q => (q.id === quote.id ? { ...q, like_count: newLikeCount } : q))
+    setQuotes((prev) =>
+      prev.map((q) => (q.id === quote.id ? { ...q, like_count: newLikeCount } : q))
     );
-    setLikedQuotes(prev => new Set([...prev, quote.id]));
+    setLikedQuotes((prev) => new Set([...prev, quote.id]));
 
     try {
       const response = await fetch('/api/like', {
@@ -91,18 +90,19 @@ export default function QuotesArchive() {
       });
       if (!response.ok) throw new Error('Failed to like quote');
       const data = await response.json();
-      setQuotes(prev =>
-        prev.map(q => (q.id === quote.id ? { ...q, like_count: data.likeCount } : q))
+      setQuotes((prev) =>
+        prev.map((q) =>
+          q.id === quote.id ? { ...q, like_count: data.likeCount } : q
+        )
       );
     } catch (error) {
       console.error('Failed to like quote:', error);
-      // revert on error
-      setQuotes(prev =>
-        prev.map(q =>
+      setQuotes((prev) =>
+        prev.map((q) =>
           q.id === quote.id ? { ...q, like_count: quote.like_count || 0 } : q
         )
       );
-      setLikedQuotes(prev => {
+      setLikedQuotes((prev) => {
         const newSet = new Set(prev);
         newSet.delete(quote.id);
         return newSet;
@@ -152,7 +152,6 @@ export default function QuotesArchive() {
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
             Quote
@@ -162,12 +161,10 @@ export default function QuotesArchive() {
             </span>
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Your personal collection of inspiring quotes, saved with beautiful preview
-            images.
+            Your personal collection of inspiring quotes, saved with beautiful preview images.
           </p>
         </div>
 
-        {/* Search & Filter */}
         <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-slate-200">
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             <div className="relative flex-1 w-full">
@@ -176,7 +173,7 @@ export default function QuotesArchive() {
                 type="text"
                 placeholder="Search quotes or authors..."
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 h-12 text-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
@@ -185,11 +182,11 @@ export default function QuotesArchive() {
               <Filter className="h-5 w-5 text-slate-600" />
               <select
                 value={selectedCategory}
-                onChange={e => setSelectedCategory(e.target.value)}
+                onChange={(e) => setSelectedCategory(e.target.value)}
                 className="px-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-700 focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="All">All Categories</option>
-                {categories.map(cat => (
+                {categories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
@@ -199,14 +196,12 @@ export default function QuotesArchive() {
           </div>
         </div>
 
-        {/* Count */}
         <div className="mb-6">
           <p className="text-slate-600">
             Showing {filteredQuotes.length} of {quotes.length} quotes
           </p>
         </div>
 
-        {/* Empty State */}
         {filteredQuotes.length === 0 && !isLoading ? (
           <div className="text-center py-12">
             <div className="text-slate-500 text-xl mb-4">
@@ -227,96 +222,101 @@ export default function QuotesArchive() {
             )}
           </div>
         ) : (
-          /* Quote Cards Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredQuotes.map(quote => (
-              <Card
-                key={quote.id}
-                className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden"
-              >
-                <div className="h-full flex flex-col">
-                  {/* Dynamic OG Preview Image */}
-                  {quote.image_url && (
-                    <div className="relative h-48 w-full overflow-hidden">
-                      <Image
-                        src={`/api/og?text=${encodeURIComponent(
-                          quote.text
-                        )}&author=${encodeURIComponent(
-                          quote.author
-                        )}&category=${encodeURIComponent(quote.category)}`}
-                        alt={`Quote by ${quote.author}`}
-                        width={1200}
-                        height={630}
-                        unoptimized
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  )}
+            {filteredQuotes.map((quote) => {
+              // cache buster timestamp
+              const ts = Date.now();
+              const ogUrl =
+                `/api/og?` +
+                `text=${encodeURIComponent(quote.text)}` +
+                `&author=${encodeURIComponent(quote.author)}` +
+                `&category=${encodeURIComponent(quote.category)}` +
+                `&v=${ts}`;
 
-                  {/* Card Body */}
-                  <div className="p-6 flex-1 flex flex-col">
-                    <div className="mb-4">
-                      <Badge
-                        variant="secondary"
-                        className="bg-blue-100 text-blue-800 hover:bg-blue-200"
-                      >
-                        {quote.category}
-                      </Badge>
-                    </div>
-
-                    <blockquote className="flex-1 text-slate-800 text-lg leading-relaxed mb-4 font-serif">
-                      "{quote.text}"
-                    </blockquote>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center text-slate-600 font-medium">
-                        <User className="h-4 w-4 mr-2" />
-                        {quote.author}
+              return (
+                <Card
+                  key={quote.id}
+                  className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] overflow-hidden"
+                >
+                  <div className="h-full flex flex-col">
+                    {quote.image_url && (
+                      <div className="relative h-48 w-full overflow-hidden">
+                        <Image
+                          src={ogUrl}
+                          alt={`Quote by ${quote.author}`}
+                          width={1200}
+                          height={630}
+                          unoptimized
+                          className="object-cover w-full h-full"
+                        />
                       </div>
+                    )}
 
-                      <div className="flex items-center text-sm text-slate-500">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {formatDate(quote.created_at)}
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => likeQuote(quote)}
-                          disabled={likedQuotes.has(quote.id) || isLiking}
-                          className={`transition-colors duration-200 ${
-                            likedQuotes.has(quote.id)
-                              ? 'text-red-600 hover:text-red-700'
-                              : 'text-slate-500 hover:text-slate-700'
-                          }`}
+                    <div className="p-6 flex-1 flex flex-col">
+                                           <div className="mb-4">
+                        <Badge
+                          variant="secondary"
+                          className="bg-blue-100 text-blue-800 hover:bg-blue-200"
                         >
-                          <Heart
-                            className={`h-4 w-4 mr-1 ${
-                              likedQuotes.has(quote.id) ? 'fill-current' : ''
+                          {quote.category}
+                        </Badge>
+                      </div>
+
+                      <blockquote className="flex-1 text-slate-800 text-lg leading-relaxed mb-4 font-serif">
+                        "{quote.text}"
+                      </blockquote>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center text-slate-600 font-medium">
+                          <User className="h-4 w-4 mr-2" />
+                          {quote.author}
+                        </div>
+
+                        <div className="flex items-center text-sm text-slate-500">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          {formatDate(quote.created_at)}
+                        </div>
+
+                        <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => likeQuote(quote)}
+                            disabled={likedQuotes.has(quote.id) || isLiking}
+                            className={`transition-colors duration-200 ${
+                              likedQuotes.has(quote.id)
+                                ? 'text-red-600 hover:text-red-700'
+                                : 'text-slate-500 hover:text-slate-700'
                             }`}
-                          />
-                          <span>{quote.like_count || 0}</span>
-                        </Button>
+                          >
+                            <Heart
+                              className={`h-4 w-4 mr-1 ${
+                                likedQuotes.has(quote.id) ? 'fill-current' : ''
+                              }`}
+                            />
+                            <span>{quote.like_count || 0}</span>
+                          </Button>
 
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => shareQuote(quote)}
-                          className="text-slate-500 hover:text-slate-700 transition-colors duration-200"
-                        >
-                          <Share2 className="h-4 w-4 mr-1" />
-                          Share
-                        </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => shareQuote(quote)}
+                            className="text-slate-500 hover:text-slate-700 transition-colors duration-200"
+                          >
+                            <Share2 className="h-4 w-4 mr-1" />
+                            Share
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
     </div>
   );
 }
+
