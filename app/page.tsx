@@ -544,6 +544,22 @@ export default function Home() {
           <p className="text-slate-600 max-w-2xl mx-auto">Enter your name and share your thoughts to create personalized quotes that reflect your unique perspective. Your wisdom, your words, your inspiration.</p>
         </div>
       </div>
+
+      {/* Bolt.new Sponsorship Badge */}
+      <a
+        href="https://bolt.new/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 transition-all duration-300 hover:scale-110 hover:shadow-lg"
+      >
+        <Image
+          src="/white_circle_360x360.png"
+          alt="Built with Bolt.new"
+          width={80}
+          height={80}
+          className="rounded-full shadow-md hover:shadow-xl transition-shadow duration-300"
+        />
+      </a>
     </div>
   );
 }
