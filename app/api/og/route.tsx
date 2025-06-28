@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'space-between',　// ← これで上下に要素を散らす
         background: 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)',
         fontFamily: 'Noto Sans,system-ui,sans-serif',
         padding: '48px 160px',            // 横側に余白を確保
