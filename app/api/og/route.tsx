@@ -17,22 +17,27 @@ export async function GET(req: NextRequest) {
     : text
 
   // 2) 文字数で段階的にフォント＆余白を調整
+  //    特に中長文(60～90文字)の余白を大きく取るようしきい値を修正
   let fontSize: number
   let quoteMargin: number
   const len = truncated.length
 
   if (len > 120) {
+    // 非常に長い文
     fontSize    = 36
     quoteMargin = 48
   } else if (len > 90) {
+    // 長めの文
     fontSize    = 44
     quoteMargin = 64
   } else if (len > 60) {
+    // 中長文 → 余白を拡大
     fontSize    = 52
-    quoteMargin = 80
+    quoteMargin = 120   // ← ここを 80→120 に増やしました
   } else {
+    // 短い文
     fontSize    = 64
-    quoteMargin = 100
+    quoteMargin = 140
   }
 
   // 3) ImageResponse で OG 画像を返す
