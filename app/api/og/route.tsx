@@ -39,10 +39,12 @@ export async function GET(req: NextRequest) {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'flex-start',            // ← space-between を外し flex-start へ
+          justifyContent: 'flex-start',
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           fontFamily: 'Noto Sans, system-ui, sans-serif',
-          padding: '48px 160px',
+          // 上:48px, 右/左:160px, 下:120px を確保
+          padding: '48px 160px 120px',
+          position: 'relative',
         }}
       >
         {/* 1. Category Badge */}
@@ -76,26 +78,32 @@ export async function GET(req: NextRequest) {
             overflowWrap: 'break-word',
             wordBreak: 'break-word',
             textShadow: '0 4px 12px rgba(0,0,0,0.4)',
-            // marginBottom を削除
+            // marginBottom は不要
           }}
         >
           “{truncated}”
         </div>
 
-        {/* 3. Spacer: この要素が空き領域を埋める */}
-        <div style={{ flex: 1 }} />
-
-        {/* 4. Author */}
+        {/* 3. Author (絶対配置で常に下:32px の位置に) */}
         <div
           style={{
+            position: 'absolute',
+            bottom: 32,
+            width: '100%',
             display: 'flex',
-            fontSize: 32,
-            fontWeight: 600,
-            color: '#ffffffe6',
-            marginTop: 32,
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          — {author}
+          <span
+            style={{
+              fontSize: 32,
+              fontWeight: 600,
+              color: '#ffffffe6',
+            }}
+          >
+            — {author}
+          </span>
         </div>
       </div>
     ),
