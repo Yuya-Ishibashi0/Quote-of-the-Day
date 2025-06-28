@@ -1,9 +1,11 @@
 // app/api/og/route.ts
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const runtime = 'edge'
+
 import { ImageResponse } from '@vercel/og'
 import { NextRequest } from 'next/server'
-
-export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
