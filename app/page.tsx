@@ -17,6 +17,7 @@ import {
 import { Share2, Heart, Sparkles, Check, Archive, Calendar, User } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface Quote {
   id?: number;
@@ -265,7 +266,14 @@ export default function Home() {
               <p className="text-slate-600">Your recently saved quotes</p>
             </div>
             
-            <Carousel className="w-full max-w-5xl mx-auto">
+            <Carousel 
+              className="w-full max-w-5xl mx-auto"
+              plugins={[
+                Autoplay({
+                  delay: 5000,
+                })
+              ]}
+            >
               <CarouselContent className="-ml-2 md:-ml-4">
                 {archivedQuotes.map((quote) => (
                   <CarouselItem key={quote.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
