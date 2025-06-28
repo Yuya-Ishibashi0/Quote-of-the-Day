@@ -29,8 +29,8 @@ export async function GET(req: NextRequest) {
     fontSize = 64
   }
 
-  // 3) ImageResponse で OG 画像を返す
-  return new ImageResponse(
+  // 3) ImageResponse で OG 画像を生成
+  const imageRes = new ImageResponse(
     (
       <div
         style={{
@@ -91,4 +91,13 @@ export async function GET(req: NextRequest) {
       },
     }
   )
+
+  // 4) キャッシュ制御ヘッダーをセット
+  imageRes.headers.set(
+    'Cache-Control',
+    'no-store, no-cache, max-age=0, must-revalidate'
+  )
+
+  // 5) 最後にレスポンスを返却
+  return imageRes
 }

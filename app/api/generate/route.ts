@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite-preview-06-17' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
 
     const aiPrompt = `Based on the following user input, generate 3 unique, insightful, and short quotes that relate to their thoughts, feelings, or situation. Each quote should be inspirational, meaningful, and relevant to what they've shared. The quotes should be original and thoughtful, not generic platitudes.
 

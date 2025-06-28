@@ -330,6 +330,116 @@ export default function Home() {
           </div>
         </Card>
 
+        {/* Action Buttons - Moved here immediately after the input card */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+          <Button
+            onClick={generateAIQuote}
+            disabled={isLoading || !userInput.trim() || !authorName.trim()}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Sparkles className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>{isLoading ? 'Generating...' : 'Generate My Quote'}</span>
+          </Button>
+          <Button
+            onClick={saveQuoteToArchive}
+            disabled={!hasSelectedQuote || isSaving}
+            variant="outline"
+            className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50"
+          >
+            <Archive className={`h-5 w-5 ${isSaving ? 'animate-spin' : ''}`} />
+            <span>{isSaving ? 'Saving...' : 'Save to Archive'}</span>
+          </Button>
+          <Button
+            onClick={shareQuote}
+            disabled={!hasSelectedQuote}
+            variant="outline"
+            className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50"
+          >
+            <Share2 className="h-5 w-5" />
+            <span>Share on X</span>
+          </Button>
+          <Button
+            onClick={() => currentQuote && likeQuote(currentQuote)}
+            disabled={
+              !hasSelectedQuote ||
+              !currentQuote?.id ||
+              (currentQuote?.id && likedQuotes.has(currentQuote.id)) ||
+              isLiking
+            }
+            variant="outline"
+            className={`border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
+              !hasSelectedQuote || !currentQuote?.id || (currentQuote?.id && likedQuotes.has(currentQuote.id))
+                ? 'opacity-50 cursor-not-allowed'
+                : currentQuote?.id && likedQuotes.has(currentQuote.id)
+                ? 'text-red-600 border-red-300 bg-red-50 hover:bg-red-100'
+                : 'text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <Heart className={`h-5 w-5 ${currentQuote?.id && likedQuotes.has(currentQuote.id) ? 'fill-current' : ''}`} />
+            <span>
+              {currentQuote?.id && likedQuotes.has(currentQuote.id)
+                ? `Liked (${currentQuote.like_count || 0})`
+                : `Like${currentQuote?.like_count ? ` (${currentQuote.like_count})` : ''}`}
+            </span>
+          </Button>
+        </div>
+
+        {showGeneratedQuotes && (
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold text-slate-900 mb-4 text-center">Choose your favorite quote:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {generatedQuotes.map((quote, index) => (
+                <Card
+                  key={index}
+                  onClick={() => selectQuote(index)}
+                  className={`cursor-pointer transition-all duration-300 p-4 hover:shadow-lg ${
+                    selectedQuoteIndex === index
+                      ? 'ring-2 ring-blue-500 bg-blue-50/50 shadow-lg'
+                      : 'bg-white/80 backdrop-blur-sm hover:bg-blue-50/30'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
+                        {quote.category}
+                      </span>
+                      {selectedQuoteIndex === index && <Check className="h-5 w-5 text-blue-600" />}
+                    </div>
+                    <blockquote className="text-sm text-slate-800 leading-relaxed font-serif">
+                      "{quote.text}"
+                    </blockquote>
+                    <div className="text-xs text-slate-600 font-medium"> — {quote.author} </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentQuote && (
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl shadow-blue-100/50 p-8 sm:p-12 mb-8 transform hover:scale-[1.02] transition-all duration-300">
+            <div className="text-center">
+              <div className="mb-6 flex items-center justify-center space-x-2">
+                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                  {currentQuote.category}
+                </span>
+                {isAIGenerated && (
+                  <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full flex items-center space-x-1">
+                    <Sparkles className="h-3 w-3" />
+                    <span>Personal Quote</span>
+                  </span>
+                )}
+              </div>
+              <blockquote className="text-2xl sm:text-3xl lg:text-4xl font-serif text-slate-800 leading-relaxed mb-8 relative">
+                <span className="text-6xl text-blue-200 absolute -top-4 -left-4 font-serif">"</span>
+                {currentQuote.text}
+                <span className="text-6xl text-blue-200 absolute -bottom-8 -right-4 font-serif">"</span>
+              </blockquote>
+              <div className="text-xl text-slate-600 font-medium"> — {currentQuote.author}</div>
+            </div>
+          </Card>
+        )}
+
         {/* Quote Slideshow Section */}
         {archivedQuotes.length > 0 && (
           <div className="mb-8">
@@ -432,115 +542,6 @@ export default function Home() {
             </Carousel>
           </div>
         )}
-
-        {showGeneratedQuotes && (
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-slate-900 mb-4 text-center">Choose your favorite quote:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {generatedQuotes.map((quote, index) => (
-                <Card
-                  key={index}
-                  onClick={() => selectQuote(index)}
-                  className={`cursor-pointer transition-all duration-300 p-4 hover:shadow-lg ${
-                    selectedQuoteIndex === index
-                      ? 'ring-2 ring-blue-500 bg-blue-50/50 shadow-lg'
-                      : 'bg-white/80 backdrop-blur-sm hover:bg-blue-50/30'
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                        {quote.category}
-                      </span>
-                      {selectedQuoteIndex === index && <Check className="h-5 w-5 text-blue-600" />}
-                    </div>
-                    <blockquote className="text-sm text-slate-800 leading-relaxed font-serif">
-                      "{quote.text}"
-                    </blockquote>
-                    <div className="text-xs text-slate-600 font-medium"> — {quote.author} </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {currentQuote && (
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl shadow-blue-100/50 p-8 sm:p-12 mb-8 transform hover:scale-[1.02] transition-all duration-300">
-            <div className="text-center">
-              <div className="mb-6 flex items-center justify-center space-x-2">
-                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                  {currentQuote.category}
-                </span>
-                {isAIGenerated && (
-                  <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full flex items-center space-x-1">
-                    <Sparkles className="h-3 w-3" />
-                    <span>Personal Quote</span>
-                  </span>
-                )}
-              </div>
-              <blockquote className="text-2xl sm:text-3xl lg:text-4xl font-serif text-slate-800 leading-relaxed mb-8 relative">
-                <span className="text-6xl text-blue-200 absolute -top-4 -left-4 font-serif">"</span>
-                {currentQuote.text}
-                <span className="text-6xl text-blue-200 absolute -bottom-8 -right-4 font-serif">"</span>
-              </blockquote>
-              <div className="text-xl text-slate-600 font-medium"> — {currentQuote.author}</div>
-            </div>
-          </Card>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button
-            onClick={generateAIQuote}
-            disabled={isLoading || !userInput.trim() || !authorName.trim()}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Sparkles className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>{isLoading ? 'Generating...' : 'Generate My Quote'}</span>
-          </Button>
-          <Button
-            onClick={saveQuoteToArchive}
-            disabled={!hasSelectedQuote || isSaving}
-            variant="outline"
-            className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50"
-          >
-            <Archive className={`h-5 w-5 ${isSaving ? 'animate-spin' : ''}`} />
-            <span>{isSaving ? 'Saving...' : 'Save to Archive'}</span>
-          </Button>
-          <Button
-            onClick={shareQuote}
-            disabled={!hasSelectedQuote}
-            variant="outline"
-            className="border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 hover:bg-slate-50"
-          >
-            <Share2 className="h-5 w-5" />
-            <span>Share on X</span>
-          </Button>
-          <Button
-            onClick={() => currentQuote && likeQuote(currentQuote)}
-            disabled={
-              !hasSelectedQuote ||
-              !currentQuote?.id ||
-              (currentQuote?.id && likedQuotes.has(currentQuote.id)) ||
-              isLiking
-            }
-            variant="outline"
-            className={`border-slate-300 px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
-              !hasSelectedQuote || !currentQuote?.id || (currentQuote?.id && likedQuotes.has(currentQuote.id))
-                ? 'opacity-50 cursor-not-allowed'
-                : currentQuote?.id && likedQuotes.has(currentQuote.id)
-                ? 'text-red-600 border-red-300 bg-red-50 hover:bg-red-100'
-                : 'text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <Heart className={`h-5 w-5 ${currentQuote?.id && likedQuotes.has(currentQuote.id) ? 'fill-current' : ''}`} />
-            <span>
-              {currentQuote?.id && likedQuotes.has(currentQuote.id)
-                ? `Liked (${currentQuote.like_count || 0})`
-                : `Like${currentQuote?.like_count ? ` (${currentQuote.like_count})` : ''}`}
-            </span>
-          </Button>
-        </div>
 
         <div className="mt-16 text-center">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Personal Wisdom</h2>
