@@ -269,13 +269,15 @@ export default function QuotesArchive() {
                   {/* Quote Image */}
                   {quote.image_url && (
                     <div className="relative h-48 w-full">
-                      <Image
-                        src={quote.image_url}
-                        alt={`Quote by ${quote.author}`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
+                        <Image
+                      src={`/api/og?text=${encodeURIComponent(q.text)}&author=${encodeURIComponent(q.author)}`}
+                      width={1200}
+                      height={630}
+                      alt="Quote preview"
+                      unoptimized  // ← Vercel 以外の環境や崩れが出る場合はバイパス
+                      priority     // LCP 対策（必要なら）
+                      sizes="(max-width: 768px) 100vw, 1200px"
+                    />
                     </div>
                   )}
                   
