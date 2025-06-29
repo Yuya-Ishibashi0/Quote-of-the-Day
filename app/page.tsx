@@ -254,28 +254,39 @@ export default function Home() {
 
   const shareQuote = () => {
     if (!currentQuote) return;
-    const baseUrl = window.location.origin;
-    const quoteUrl = new URL('/q', baseUrl);
-    quoteUrl.searchParams.set('text', currentQuote.text);
-    quoteUrl.searchParams.set('author', currentQuote.author);
-    quoteUrl.searchParams.set('category', currentQuote.category);
+    
+    // Create direct OG image URL
+    const base = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const params = new URLSearchParams({
+      text: currentQuote.text,
+      author: currentQuote.author,
+      category: currentQuote.category,
+      v: String(Date.now()), // cache-buster
+    });
+    const ogImageUrl = `${base}/api/og?${params}`;
+    
     const tweetText = 'I created a new quote from my daily thoughts! Check it out:';
     const twitterUrl = new URL('https://twitter.com/intent/tweet');
     twitterUrl.searchParams.set('text', tweetText);
-    twitterUrl.searchParams.set('url', quoteUrl.toString());
+    twitterUrl.searchParams.set('url', ogImageUrl);
     window.open(twitterUrl.toString(), '_blank');
   };
 
   const shareArchivedQuote = (quote: Quote) => {
-    const baseUrl = window.location.origin;
-    const quoteUrl = new URL('/q', baseUrl);
-    quoteUrl.searchParams.set('text', quote.text);
-    quoteUrl.searchParams.set('author', quote.author);
-    quoteUrl.searchParams.set('category', quote.category);
+    // Create direct OG image URL
+    const base = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const params = new URLSearchParams({
+      text: quote.text,
+      author: quote.author,
+      category: quote.category,
+      v: String(Date.now()), // cache-buster
+    });
+    const ogImageUrl = `${base}/api/og?${params}`;
+    
     const tweetText = 'Check out this inspiring quote from my archive:';
     const twitterUrl = new URL('https://twitter.com/intent/tweet');
     twitterUrl.searchParams.set('text', tweetText);
-    twitterUrl.searchParams.set('url', quoteUrl.toString());
+    twitterUrl.searchParams.set('url', ogImageUrl);
     window.open(twitterUrl.toString(), '_blank');
   };
 
