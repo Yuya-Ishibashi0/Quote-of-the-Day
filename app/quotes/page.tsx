@@ -118,19 +118,15 @@ export default function QuotesArchive() {
   };
 
   const shareQuote = (quote: Quote) => {
-    // Create direct OG image URL
-    const base = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-    const params = new URLSearchParams({
-      text: quote.text,
-      author: quote.author,
-      category: quote.category,
-      v: String(Date.now()), // cache-buster
-    });
-    const ogImageUrl = `${base}/api/og?${params}`;
+    const baseUrl = window.location.origin;
+    const quoteUrl = new URL('/q', baseUrl);
+    quoteUrl.searchParams.set('text', quote.text);
+    quoteUrl.searchParams.set('author', quote.author);
+    quoteUrl.searchParams.set('category', quote.category);
 
     const twitterUrl = new URL('https://twitter.com/intent/tweet');
     twitterUrl.searchParams.set('text', 'Check out this inspiring quote:');
-    twitterUrl.searchParams.set('url', ogImageUrl);
+    twitterUrl.searchParams.set('url', quoteUrl.toString());
 
     window.open(twitterUrl.toString(), '_blank');
   };
@@ -257,7 +253,7 @@ export default function QuotesArchive() {
                     )}
 
                     <div className="p-6 flex-1 flex flex-col">
-                      <div className="mb-4">
+                                           <div className="mb-4">
                         <Badge
                           variant="secondary"
                           className="bg-blue-100 text-blue-800 hover:bg-blue-200"
@@ -323,3 +319,4 @@ export default function QuotesArchive() {
     </div>
   );
 }
+
